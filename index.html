@@ -73,7 +73,7 @@
                         <label class="input-label">Nominal (Rp)</label>
                         <div class="input-wrapper">
                             <span class="prefix">Rp</span>
-                            <input type="text" id="nominal" class="form-input" placeholder="0">
+                            <input type="text" id="nominal" class="form-input" placeholder="0" inputmode="numeric" pattern="[0-9]*">
                         </div>
                     </div>
 
@@ -85,7 +85,7 @@
                                 <option value="r">Rupiah (Rp)</option>
                                 <option value="p">Persen (%)</option>
                             </select>
-                            <input type="text" id="fee-value" class="form-input" placeholder="Nilai" disabled style="background-color: var(--bg-app);">
+                            <input type="text" id="fee-value" class="form-input" placeholder="Nilai" disabled style="background-color: var(--bg-app);" inputmode="numeric" pattern="[0-9]*">
                         </div>
                     </div>
 

@@ -1,4 +1,5 @@
 let scannedData = "";
+let cachedBgImg = null;
 
 // --- Inisialisasi ---
 document.addEventListener('DOMContentLoaded', function() {
@@ -8,6 +9,10 @@ document.addEventListener('DOMContentLoaded', function() {
         feeInput.style.backgroundColor = 'var(--bg-app)';
     }
     loadTemplates();
+    
+    // Preload background image agar generate lebih cepat
+    cachedBgImg = new Image();
+    cachedBgImg.src = 'qris2.png';
 });
 
 // --- Tab System ---
@@ -193,7 +198,7 @@ function renderResult(payload) {
         height: 400,
         colorDark : "#000000",
         colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
+        correctLevel : QRCode.CorrectLevel.M
     });
 
     setTimeout(() => {
@@ -213,19 +218,17 @@ function renderResult(payload) {
             return;
         }
 
-        const bgImg = new Image();
-        bgImg.src = 'qris2.png';
-        bgImg.onload = () => {
+        const drawFinal = (bg) => {
             const finalCanvas = document.createElement('canvas');
             const ctx = finalCanvas.getContext('2d');
             
-            finalCanvas.width = bgImg.width;
-            finalCanvas.height = bgImg.height;
-            ctx.drawImage(bgImg, 0, 0);
+            finalCanvas.width = bg.width;
+            finalCanvas.height = bg.height;
+            ctx.drawImage(bg, 0, 0);
             
-            const qrSize = Math.round(bgImg.width * 0.60);
-            const qrX = (bgImg.width - qrSize) / 2;
-            const qrY = (bgImg.height - qrSize) / 2; 
+            const qrSize = Math.round(bg.width * 0.60);
+            const qrX = (bg.width - qrSize) / 2;
+            const qrY = (bg.height - qrSize) / 2; 
 
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
@@ -239,13 +242,13 @@ function renderResult(payload) {
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const timestampText = `Dicetak pada : ${day}/${month}/${year} ${hours}:${minutes}`;
 
-            const fontSize = Math.max(16, Math.round(bgImg.width * 0.025));
+            const fontSize = Math.max(16, Math.round(bg.width * 0.025));
             ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.textAlign = "left";
             ctx.fillStyle = "#000000";
             
-            const textX = bgImg.width * 0.05;
-            const textY = bgImg.height - (bgImg.height * 0.03);
+            const textX = bg.width * 0.05;
+            const textY = bg.height - (bg.height * 0.03);
 
             ctx.lineWidth = 4;
             ctx.strokeStyle = "#ffffff";
@@ -259,11 +262,19 @@ function renderResult(payload) {
             finalCanvas.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
             container.appendChild(finalCanvas);
         };
-        bgImg.onerror = () => {
-            container.innerHTML = "";
-            container.appendChild(qrCanvas);
-        };
-    }, 150);
+
+        if (cachedBgImg && cachedBgImg.complete && cachedBgImg.naturalWidth !== 0) {
+            drawFinal(cachedBgImg);
+        } else {
+            const bgImg = new Image();
+            bgImg.src = 'qris2.png';
+            bgImg.onload = () => drawFinal(bgImg);
+            bgImg.onerror = () => {
+                container.innerHTML = "";
+                container.appendChild(qrCanvas);
+            };
+        }
+    }, 50);
 }
 
 // --- Local Storage Templates ---
