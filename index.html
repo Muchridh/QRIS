@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRIS</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="logo-icon" data-icon="logo"></div>
+            <span>QRIS Maker</span>
+        </div>
+        <button id="theme-toggle" class="theme-btn" aria-label="Toggle Dark Mode">
+            <div id="theme-icon" data-icon="moon"></div>
+        </button>
+    </nav>
+
+    <div class="main-container">
+        <div class="grid-layout">
+            
+            <div class="card input-card">
+                <div class="card-header">
+                    <h2>Konfigurasi QR</h2>
+                    <p>Buat QRIS dinamis valid dalam hitungan detik.</p>
+                </div>
+
+                <div class="card-body">
+                    <div class="tabs-container">
+                        <button id="btn-scan" class="tab-btn active" onclick="switchTab('scan')">
+                            <span data-icon="scan"></span> Scan
+                        </button>
+                        <button id="btn-text" class="tab-btn" onclick="switchTab('text')">
+                            <span data-icon="manual"></span> Manual
+                        </button>
+                        <button id="btn-saved" class="tab-btn" onclick="switchTab('saved')">
+                            <span data-icon="qr"></span> Tersimpan
+                        </button>
+                    </div>
+
+                    <div id="mode-scan" class="input-section">
+                        <label class="upload-zone" for="file-input">
+                            <div class="upload-content">
+                                <div class="icon-lg" data-icon="upload"></div>
+                                <span id="file-label">Upload QRIS Statis</span>
+                                <small>JPG, PNG, JPEG</small>
+                            </div>
+                            <input type="file" id="file-input" accept="image/*">
+                        </label>
+                        <div id="scan-status" class="status-pill hidden">
+                            <div class="icon-sm" data-icon="check"></div> QR Terbaca
+                        </div>
+                    </div>
+
+                    <div id="mode-text" class="input-section hidden">
+                        <label class="input-label">String QRIS</label>
+                        <input type="text" id="text-input" class="form-input" placeholder="000201010211...">
+                    </div>
+
+                    <div id="mode-saved" class="input-section hidden">
+                        <label class="input-label">Pilih QRIS Tersimpan</label>
+                        <select id="saved-input" class="form-select">
+                            <option value="">-- Pilih QRIS --</option>
+                        </select>
+                        <button onclick="openSaveModal()" class="btn-secondary" style="margin-top: 15px; width: 100%;">
+                            + Kelola Template
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label">Nominal (Rp)</label>
+                        <div class="input-wrapper">
+                            <span class="prefix">Rp</span>
+                            <input type="text" id="nominal" class="form-input" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label">Biaya Layanan <span class="badge-optional">Opsional</span></label>
+                        <div class="fee-grid">
+                            <select id="fee-type" class="form-select">
+                                <option value="">Tanpa Fee</option>
+                                <option value="r">Rupiah (Rp)</option>
+                                <option value="p">Persen (%)</option>
+                            </select>
+                            <input type="text" id="fee-value" class="form-input" placeholder="Nilai" disabled style="background-color: var(--bg-app);">
+                        </div>
+                    </div>
+
+                    <button onclick="processQRIS()" id="btn-generate" class="btn-primary">
+                        Generate QRIS Dinamis
+                    </button>
+                </div>
+            </div>
+
+            <div class="card output-card">
+                <div class="card-header">
+                    <h2>Preview Hasil</h2>
+                </div>
+                
+                <div class="card-body result-body">
+                    <div id="empty-state" class="empty-state">
+                        <div class="empty-icon">
+                            <div class="icon-xl" data-icon="placeholder"></div>
+                        </div>
+                        <p>Hasil QR Code akan muncul di sini</p>
+                    </div>
+
+                    <div id="result-area" class="result-content hidden">
+                        <div class="qr-wrapper">
+                            <div id="qr-container"></div>
+                        </div>
+                        
+                        <h3 id="result-info" class="nominal-display">Rp 0</h3>
+                        <p class="valid-text"><span class="icon-xs" data-icon="shield"></span> Valid CRC16</p>
+
+                        <div class="action-grid">
+                            <button onclick="fullPreview()" class="btn-outline" title="Full Preview">
+                                <span>&#x26F6;</span> Preview
+                            </button>
+                            <button onclick="downloadQR()" class="btn-outline">
+                                <span data-icon="download"></span> Simpan
+                            </button>
+                            <button onclick="copyQR()" class="btn-outline">
+                                <span data-icon="copy"></span> Copy
+                            </button>
+                        </div>
+                        <textarea id="final-payload" style="display:none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+<footer class="footer">
+            <p>&copy; 2026 QRIS Tools.by <a href="https://github.com/muchridh" target="_blank">Muchridh</a></p>
+        </footer>
+    </div>
+
+    <!-- Fullscreen Preview Modal -->
+    <div id="full-preview-modal" class="modal hidden" onclick="closeFullPreview()">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeFullPreview()">&times;</button>
+            <img id="full-preview-img" src="" alt="Full Preview QRIS" />
+        </div>
+    </div>
+
+    <!-- Save Template Modal -->
+    <div id="save-modal" class="modal hidden" onclick="if(event.target===this) closeSaveModal()">
+        <div class="card" style="width: 90%; max-width: 450px; max-height: 90vh; display:flex; flex-direction:column;">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2>Kelola Template</h2>
+                    <p>Simpan string QRIS untuk digunakan lagi.</p>
+                </div>
+                <button onclick="closeSaveModal()" style="background:transparent; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-primary);">&times;</button>
+            </div>
+            <div class="card-body" style="overflow-y:auto;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label class="input-label">Nama / Label</label>
+                    <input type="text" id="save-name" class="form-input" placeholder="Contoh: Toko Utama">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label class="input-label">String QRIS</label>
+                    <textarea id="save-string" class="form-input" style="height: 100px; resize: vertical;" placeholder="000201010211..."></textarea>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="saveTemplate()" class="btn-primary" style="flex:1;">Simpan QRIS</button>
+                </div>
+                
+                <h3 style="margin-top:25px; font-size:1rem; border-bottom:1px solid var(--border-color); padding-bottom:5px; color:var(--text-primary);">Daftar Tersimpan</h3>
+                <div id="saved-list-container" class="saved-list">
+                    <!-- List items injected here by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="jsQR.min.js"></script>
+    <script src="qrcode.min.js"></script>
+    <script src="icons.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
